@@ -83,7 +83,7 @@ services:
       - env/common.env
 
   kafka:
-    image: &kafka-image "dreg.intellectika.ru/staff/bitnami/kafka:3.5"
+    image: &kafka-image "ghcr.io/yagudinaleksandr/kafka:3.5"
     restart: always
     healthcheck:
       test:
@@ -97,7 +97,7 @@ services:
       - env/kafka.env
 
   kafka-ui:
-    image: provectuslabs/kafka-ui
+    image: ghcr.io/yagudinaleksandr/kafka-ui:latest
     ports:
       - "8088:8080"
     environment:
