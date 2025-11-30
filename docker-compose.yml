@@ -1,21 +1,77 @@
 # External
 services:
-  dozzle:
-    container_name: dozzle
-    image: amir20/dozzle:v5.0.8
-    restart: unless-stopped
-    networks:
-      - default
-    ports:
-      - "5100:8080"
-    environment:
-      - DOZZLE_LEVEL=info
-      - DOZZLE_TAILSIZE=300
-      - DOZZLE_FILTER="status=running"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+  # dozzle:
+  #   container_name: dozzle
+  #   image: amir20/dozzle:v5.0.8
+  #   restart: unless-stopped
+  #   networks:
+  #     - default
+  #   ports:
+  #     - "5100:8080"
+  #   environment:
+  #     - DOZZLE_LEVEL=info
+  #     - DOZZLE_TAILSIZE=300
+  #     - DOZZLE_FILTER="status=running"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
 
   # Databases
+  
+  # clickhouse:
+  #   image: clickhouse/clickhouse-server:24.6
+  #   restart: always
+  #   depends_on:
+  #     kafka:
+  #       condition: service_healthy
+  #   # Если нужно установить уровень логирования warning:
+  #   #    volumes:
+  #   #      - ./config/clickhouse_config.xml:/etc/clickhouse-server/config.d/local_config.xml
+  #   ports:
+  #     - "8123:8123"
+  #     - "9000:9000"
+  #   healthcheck:
+  #     test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+  #     interval: 7s
+  #     timeout: 7s
+  #     retries: 5
+  #   env_file:
+  #     - env/clickhouse.env
+
+  # clickhouse-migrations:
+  #   image: dreg.intellectika.ru/smarttwin/clickhouse-cli:1.37.4
+  #   depends_on:
+  #     clickhouse:
+  #       condition: service_healthy
+  #   env_file:
+  #     - env/kafka-broker.env
+  #     - env/clickhouse.env
+  #     - env/clickhouse-migrations.env
+  #   volumes:
+  #     - ../../Artifact/CHSql:/app/clickhouse/migrations
+
+  # postgres:
+  #   image: postgis/postgis:13-3.3
+  #   ports:
+  #     - 5444:5432
+  #   env_file:
+  #     - env/postgres.env
+  #   healthcheck:
+  #     test: pg_isready -U postgres
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    env_file:
+      - env/postgres.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   redis:
     container_name: moorinet-redis
     image: redis:7.0-alpine
@@ -26,80 +82,18 @@ services:
     expose:
       - 6379
 
-  clickhouse:
-    image: clickhouse/clickhouse-server:24.6
-    restart: always
-    depends_on:
-      kafka:
-        condition: service_healthy
-    # Если нужно установить уровень логирования warning:
-    #    volumes:
-    #      - ./config/clickhouse_config.xml:/etc/clickhouse-server/config.d/local_config.xml
-    ports:
-      - "8123:8123"
-      - "9000:9000"
-    healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
-      interval: 7s
-      timeout: 7s
-      retries: 5
-    env_file:
-      - env/clickhouse.env
-
-  clickhouse-migrations:
-    image: dreg.intellectika.ru/smarttwin/clickhouse-cli:1.37.4
-    depends_on:
-      clickhouse:
-        condition: service_healthy
-    env_file:
-      - env/kafka-broker.env
-      - env/clickhouse.env
-      - env/clickhouse-migrations.env
-    volumes:
-      - ../../Artifact/CHSql:/app/clickhouse/migrations
-
-  postgres:
-    image: postgis/postgis:13-3.3
-    ports:
-      - 5444:5432
-    env_file:
-      - env/postgres.env
-    healthcheck:
-      test: pg_isready -U postgres
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  #Data base Init
-  postgres-migrations:
-    container_name: postgres-migrations
-    #image: moorinet-migration-ide:dev
-    image: dreg.intellectika.ru/moorinet/moorinet-migration:dev
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - env/postgres-db.env
-      - env/common.env
-
   kafka:
-    image: &kafka-image "ghcr.io/yagudinaleksandr/kafka:3.5"
-    restart: always
-    healthcheck:
-      test:
-        ["CMD", "kafka-topics.sh", "--bootstrap-server=kafka:9092", "--list"]
-      start_period: 15s
-      interval: 10s
-    ports:
-      - "9092:9092"
-      - "9094:9094"
+    image: ghcr.io/yagudinaleksandr/kafka:3.5
+    container_name: kafka
     env_file:
       - env/kafka.env
+    ports:
+      - "9092:9092"
 
   kafka-ui:
     image: ghcr.io/yagudinaleksandr/kafka-ui:latest
-    ports:
-      - "8088:8080"
-    environment:
-      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka:9092
-      - KAFKA_CLUSTERS_0_NAME=kraft
+    container_name: kafka-ui
+
+
+volumes:
+  postgres_data:
