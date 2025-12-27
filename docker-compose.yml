@@ -109,8 +109,8 @@ services:
 
   # Сервисы
   orgusersservice:
-    image: digittwinorgusersserviceapi:latest
-    container_name: dtorgusers
+    image: ghcr.io/yagudinaleksandr/digittwin.orgusersservice:1.0.0-rc
+    container_name: dt-orgusers
     depends_on:
       postgres:
         condition: service_healthy
@@ -123,6 +123,18 @@ services:
     ports:
       - "5131:5131"
       - "7260:7260"
+
+  gateway:
+    image: ghcr.io/yagudinaleksandr/digittwin.gateway:1.0.0
+    container_name: dt-gateway
+    ports:
+      - "5001:5001"   
+    volumes:
+      - ./configs/ocelot.json:/app/ocelot.json:ro
+    depends_on:
+      - orgusersservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
 
 volumes:
   postgres_data:
