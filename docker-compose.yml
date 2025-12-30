@@ -78,7 +78,7 @@ services:
       retries: 10
 
   redis:
-    container_name: moorinet-redis
+    container_name: redis
     image: redis:7.0-alpine
     restart: always
     ports:
@@ -109,7 +109,7 @@ services:
 
   # Сервисы
   orgusersservice:
-    image: ghcr.io/yagudinaleksandr/digittwin.orgusersservice:1.0.0-rc
+    image: ghcr.io/yagudinaleksandr/digittwin.orgusersservice:dev
     container_name: dt-orgusers
     depends_on:
       postgres:
